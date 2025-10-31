@@ -12,40 +12,26 @@ export interface PDFPageData {
   viewport: any;
 }
 
-function isTextInRedactionBox(
+function isTextRedacted(
   textItem: any,
-  viewport: any,
   redactionBoxes: RedactionBox[],
   pageNumber: number,
   scale: number = 1.5
 ): boolean {
   const pageBoxes = redactionBoxes.filter(box => box.pageNumber === pageNumber);
 
-  if (pageBoxes.length === 0) {
-    return false;
-  }
+  if (pageBoxes.length === 0) return false;
 
-  const transform = viewport.transform;
-  const x = textItem.transform[4];
-  const y = textItem.transform[5];
-  const width = textItem.width;
-  const height = textItem.height;
+  const textX = textItem.transform[4] * scale;
+  const textY = textItem.transform[5] * scale;
+  const textWidth = textItem.width * scale;
+  const textHeight = textItem.height * scale;
 
   for (const box of pageBoxes) {
-    const boxLeft = box.x;
-    const boxRight = box.x + box.width;
-    const boxTop = box.y;
-    const boxBottom = box.y + box.height;
+    const overlapsX = textX < box.x + box.width && textX + textWidth > box.x;
+    const overlapsY = textY < box.y + box.height && textY + textHeight > box.y;
 
-    const textLeft = x * scale;
-    const textRight = (x + width) * scale;
-    const textTop = y * scale;
-    const textBottom = (y + height) * scale;
-
-    const horizontalOverlap = textLeft < boxRight && textRight > boxLeft;
-    const verticalOverlap = textTop < boxBottom && textBottom > boxTop;
-
-    if (horizontalOverlap && verticalOverlap) {
+    if (overlapsX && overlapsY) {
       return true;
     }
   }
@@ -61,24 +47,17 @@ export async function extractTextFromPDF(
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
 
   const pages: PDFPageData[] = [];
-  const scale = 1.5;
 
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
     const textContent = await page.getTextContent();
-    const viewport = page.getViewport({ scale: 1.0 });
+    const viewport = page.getViewport({ scale: 1.5 });
 
     const filteredItems = textContent.items.filter((item: any) => {
-      if (!item.str || item.str.trim() === '') {
-        return false;
-      }
-
-      return !isTextInRedactionBox(item, viewport, redactionBoxes, i, scale);
+      return item.str?.trim() && !isTextRedacted(item, redactionBoxes, i, 1.5);
     });
 
-    const text = filteredItems
-      .map((item: any) => item.str)
-      .join(' ');
+    const text = filteredItems.map((item: any) => item.str).join(' ');
 
     pages.push({
       pageNumber: i,
