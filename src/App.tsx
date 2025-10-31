@@ -45,7 +45,7 @@ function App() {
     try {
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      const pages = await extractTextFromPDF(selectedFile!);
+      const pages = await extractTextFromPDF(selectedFile!, redactionBoxes);
       const allText = pages.map(p => p.text).join('\n');
 
       const parsedTransactions = parseTransactions(allText);
