@@ -26,12 +26,20 @@ function isTextRedacted(
   const textY = textItem.transform[5] * scale;
   const textWidth = textItem.width * scale;
   const textHeight = textItem.height * scale;
+  const textRight = textX + textWidth;
+  const textBottom = textY + textHeight;
 
   for (const box of pageBoxes) {
-    const overlapsX = textX < box.x + box.width && textX + textWidth > box.x;
-    const overlapsY = textY < box.y + box.height && textY + textHeight > box.y;
+    const boxRight = box.x + box.width;
+    const boxBottom = box.y + box.height;
 
-    if (overlapsX && overlapsY) {
+    const textInsideBox =
+      textX >= box.x &&
+      textY >= box.y &&
+      textRight <= boxRight &&
+      textBottom <= boxBottom;
+
+    if (textInsideBox) {
       return true;
     }
   }
