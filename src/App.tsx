@@ -119,6 +119,7 @@ function App() {
 
         {state === "redact" && selectedFile && (
           <PDFRedactor
+            key={selectedFile.name}
             file={selectedFile}
             onComplete={handleRedactionComplete}
             onCancel={handleCancelRedaction}
