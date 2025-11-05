@@ -1,64 +1,72 @@
-import { useState } from 'react';
-import Navbar from './components/Navbar';
-import FileUploader from './components/FileUploader';
-import PDFRedactor from './components/PDFRedactor';
-import LoadingScreen from './components/LoadingScreen';
-import Dashboard from './components/Dashboard';
-import { Transaction, TransactionSummary, RedactionBox } from './types/transaction';
-import { extractTextFromPDF, validateBankStatement } from './utils/pdfProcessor';
-import { parseTransactions } from './utils/transactionParser';
-import { categorizeTransactions } from './utils/categorizer';
-import { generateSummary } from './utils/analytics';
+import { useState } from "react";
+import Navbar from "./components/Navbar";
+import FileUploader from "./components/FileUploader";
+import PDFRedactor from "./components/PDFRedactor";
+import LoadingScreen from "./components/LoadingScreen";
+import Dashboard from "./components/Dashboard";
+import {
+  Transaction,
+  TransactionSummary,
+  RedactionBox,
+} from "./types/transaction";
+import {
+  extractTextFromPDF,
+  validateBankStatement,
+} from "./utils/pdfProcessor";
+import { parseTransactions } from "./utils/transactionParser";
+import { categorizeTransactions } from "./utils/categorizer";
+import { generateSummary } from "./utils/analytics";
 
-type AppState = 'upload' | 'redact' | 'loading' | 'dashboard';
+type AppState = "upload" | "redact" | "loading" | "dashboard";
 
 function App() {
-  const [state, setState] = useState<AppState>('upload');
+  const [state, setState] = useState<AppState>("upload");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [summary, setSummary] = useState<TransactionSummary | null>(null);
 
   const handleFileSelect = async (file: File) => {
-    setState('loading');
+    setState("loading");
 
     try {
-      const isValid = await validateBankStatement(file);
+      // const isValid = await validateBankStatement(file);
 
-      if (!isValid) {
-        alert('This PDF does not appear to be a bank statement. Please upload a valid bank statement PDF.');
-        setState('upload');
-        return;
-      }
+      // if (!isValid) {
+      //   alert('This PDF does not appear to be a bank statement. Please upload a valid bank statement PDF.');
+      //   setState('upload');
+      //   return;
+      // }
 
       setSelectedFile(file);
-      setState('redact');
+      setState("redact");
     } catch (error) {
-      console.error('Error validating PDF:', error);
-      alert('Failed to validate PDF. Please try again.');
-      setState('upload');
+      console.error("Error validating PDF:", error);
+      alert("Failed to validate PDF. Please try again.");
+      setState("upload");
     }
   };
 
   const handleRedactionComplete = async (redactionBoxes: RedactionBox[]) => {
-    setState('loading');
+    setState("loading");
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       const pages = await extractTextFromPDF(selectedFile!, redactionBoxes);
-      const allText = pages.map(p => p.text).join('\n');
+      const allText = pages.map((p) => p.text).join("\n");
 
       const parsedTransactions = parseTransactions(allText);
-      const categorizedTransactions = categorizeTransactions(parsedTransactions);
+      const categorizedTransactions =
+        categorizeTransactions(parsedTransactions);
       const summaryData = generateSummary(categorizedTransactions);
 
       setTransactions(categorizedTransactions);
       setSummary(summaryData);
-      setState('dashboard');
+      setState("dashboard");
     } catch (error) {
-      console.error('Error processing PDF:', error);
-      alert('Failed to process PDF. Please try again with a different file.');
-      setState('upload');
+      console.error("Error processing PDF:", error);
+      alert("Failed to process PDF. Please try again with a different file.");
+      setState("upload");
     }
   };
 
@@ -66,12 +74,12 @@ function App() {
     setSelectedFile(null);
     setTransactions([]);
     setSummary(null);
-    setState('upload');
+    setState("upload");
   };
 
   const handleCancelRedaction = () => {
     setSelectedFile(null);
-    setState('upload');
+    setState("upload");
   };
 
   return (
@@ -79,9 +87,9 @@ function App() {
       <Navbar />
 
       <main className="container mx-auto">
-        {state === 'upload' && <FileUploader onFileSelect={handleFileSelect} />}
+        {state === "upload" && <FileUploader onFileSelect={handleFileSelect} />}
 
-        {state === 'redact' && selectedFile && (
+        {state === "redact" && selectedFile && (
           <PDFRedactor
             file={selectedFile}
             onComplete={handleRedactionComplete}
@@ -89,9 +97,9 @@ function App() {
           />
         )}
 
-        {state === 'loading' && <LoadingScreen />}
+        {state === "loading" && <LoadingScreen />}
 
-        {state === 'dashboard' && summary && (
+        {state === "dashboard" && summary && (
           <Dashboard
             transactions={transactions}
             summary={summary}
@@ -105,7 +113,8 @@ function App() {
           🔒 All data is processed locally. Nothing is uploaded.
         </p>
         <p>
-          Your financial information stays completely private and secure in your browser.
+          Your financial information stays completely private and secure in your
+          browser.
         </p>
       </footer>
     </div>

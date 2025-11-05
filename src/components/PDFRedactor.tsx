@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
-import * as pdfjsLib from 'pdfjs-dist';
-import { RedactionBox } from '../types/transaction';
-import { motion } from 'framer-motion';
-import { Eraser, Check } from 'lucide-react';
+import { useEffect, useRef, useState } from "react";
+import * as pdfjsLib from "pdfjs-dist";
+import { RedactionBox } from "../types/transaction";
+import { motion } from "framer-motion";
+import { Eraser, Check } from "lucide-react";
 
 interface PDFRedactorProps {
   file: File;
@@ -10,7 +10,11 @@ interface PDFRedactorProps {
   onCancel: () => void;
 }
 
-export default function PDFRedactor({ file, onComplete, onCancel }: PDFRedactorProps) {
+export default function PDFRedactor({
+  file,
+  onComplete,
+  onCancel,
+}: PDFRedactorProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
@@ -41,28 +45,36 @@ export default function PDFRedactor({ file, onComplete, onCancel }: PDFRedactorP
 
     const page = await pdfDoc.getPage(pageNum);
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d')!;
+    const ctx = canvas.getContext("2d")!;
 
-    const viewport = page.getViewport({ scale: 1.5 });
+    const viewport = page.getViewport({ scale: 1 });
 
     const outputScale = window.devicePixelRatio || 1;
     canvas.width = Math.floor(viewport.width * outputScale);
     canvas.height = Math.floor(viewport.height * outputScale);
-    canvas.style.width = Math.floor(viewport.width) + 'px';
-    canvas.style.height = Math.floor(viewport.height) + 'px';
+    canvas.style.width = Math.floor(viewport.width) + "px";
+    canvas.style.height = Math.floor(viewport.height) + "px";
 
-    const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : undefined;
+    const transform =
+      outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : undefined;
 
     await page.render({
       canvasContext: ctx,
       viewport: viewport,
-      transform: transform
+      transform: transform,
     }).promise;
 
-    const pageBoxes = redactionBoxes.filter(box => box.pageNumber === pageNum);
-    pageBoxes.forEach(box => {
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(box.x * outputScale, box.y * outputScale, box.width * outputScale, box.height * outputScale);
+    const pageBoxes = redactionBoxes.filter(
+      (box) => box.pageNumber === pageNum
+    );
+    pageBoxes.forEach((box) => {
+      ctx.fillStyle = "#000000";
+      ctx.fillRect(
+        box.x * outputScale,
+        box.y * outputScale,
+        box.width * outputScale,
+        box.height * outputScale
+      );
     });
   };
 
@@ -86,9 +98,9 @@ export default function PDFRedactor({ file, onComplete, onCancel }: PDFRedactorP
     const y = (e.clientY - rect.top) * scaleY;
 
     renderPage(currentPage).then(() => {
-      const ctx = canvasRef.current!.getContext('2d')!;
+      const ctx = canvasRef.current!.getContext("2d")!;
       const outputScale = window.devicePixelRatio || 1;
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+      ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
       ctx.fillRect(startPos.x, startPos.y, x - startPos.x, y - startPos.y);
     });
   };
@@ -115,8 +127,8 @@ export default function PDFRedactor({ file, onComplete, onCancel }: PDFRedactorP
           y: Math.min(startPos.y, y) / outputScale,
           width: Math.abs(width) / outputScale,
           height: Math.abs(height) / outputScale,
-          pageNumber: currentPage
-        }
+          pageNumber: currentPage,
+        },
       ]);
     }
 
