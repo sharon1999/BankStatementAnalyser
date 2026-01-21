@@ -16,8 +16,15 @@ interface DashboardProps {
 }
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
+const USD_TO_INR = 83.5; // Current exchange rate
 
 export default function Dashboard({ transactions, summary, onReset }: DashboardProps) {
+  console.log("Transactions", transactions);
+
+  const formatINR = (usdAmount: number): string => {
+    const inrAmount = usdAmount * USD_TO_INR;
+    return `₹${inrAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
   const pieData = Object.entries(summary.categoryBreakdown)
     .map(([name, value]) => ({ name, value }))
     .sort((a, b) => b.value - a.value)
@@ -95,7 +102,7 @@ export default function Dashboard({ transactions, summary, onReset }: DashboardP
             <h3 className="text-sm font-medium opacity-90">Total Income</h3>
             <TrendingUp size={24} />
           </div>
-          <p className="text-3xl font-bold">${summary.totalIncome.toFixed(2)}</p>
+          <p className="text-3xl font-bold">{formatINR(summary.totalIncome)}</p>
         </motion.div>
 
         <motion.div
@@ -108,7 +115,7 @@ export default function Dashboard({ transactions, summary, onReset }: DashboardP
             <h3 className="text-sm font-medium opacity-90">Total Expenses</h3>
             <TrendingDown size={24} />
           </div>
-          <p className="text-3xl font-bold">${summary.totalExpenses.toFixed(2)}</p>
+          <p className="text-3xl font-bold">{formatINR(summary.totalExpenses)}</p>
         </motion.div>
 
         <motion.div
@@ -121,7 +128,7 @@ export default function Dashboard({ transactions, summary, onReset }: DashboardP
             <h3 className="text-sm font-medium opacity-90">Net Balance</h3>
             <DollarSign size={24} />
           </div>
-          <p className="text-3xl font-bold">${summary.netBalance.toFixed(2)}</p>
+          <p className="text-3xl font-bold">{formatINR(summary.netBalance)}</p>
         </motion.div>
 
         <motion.div
@@ -161,12 +168,12 @@ export default function Dashboard({ transactions, summary, onReset }: DashboardP
                 cx="50%"
                 cy="50%"
                 labelLine={false}
-                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                label={({ name, percent }: any) => `${name} ${(percent * 100).toFixed(0)}%`}
                 outerRadius={100}
                 fill="#8884d8"
                 dataKey="value"
               >
-                {pieData.map((entry, index) => (
+                {pieData.map((_entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>

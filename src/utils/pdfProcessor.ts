@@ -13,8 +13,9 @@ export interface PDFPageData {
 }
 
 /**
- * Check whether a text item falls inside any redaction box.
- * Uses proper coordinate transformation between PDF space and canvas space.
+ * Check whether a text item should be redacted.
+ * Uses area-based coverage: only redacts if >50% of text is covered by a redaction box.
+ * This allows for precise word-level redaction instead of entire lines.
  */
 function isTextRedacted(
   textItem: any,
@@ -27,42 +28,53 @@ function isTextRedacted(
   );
   if (pageBoxes.length === 0) return false;
 
-  // Extract the PDF-space coordinates
-  const [pdfX, pdfY] = [textItem.transform[4], textItem.transform[5]];
+  const pdfX = textItem.transform[4];
+  const pdfY = textItem.transform[5];
   const pdfWidth = textItem.width;
   const pdfHeight = textItem.height;
 
-  // Convert PDF coordinates to canvas coordinates using the viewport
-  const [x1, y1] = viewport.convertToViewportPoint(pdfX, pdfY);
-  const [x2, y2] = viewport.convertToViewportPoint(
+  const [vx1, vy1] = viewport.convertToViewportPoint(pdfX, pdfY);
+  const [vx2, vy2] = viewport.convertToViewportPoint(
     pdfX + pdfWidth,
     pdfY + pdfHeight
   );
 
-  const textX = Math.min(x1, x2);
-  const textY = Math.min(y1, y2);
-  const textWidth = Math.abs(x2 - x1);
-  const textHeight = Math.abs(y2 - y1);
+  const textX = Math.min(vx1, vx2);
+  const textY = Math.min(vy1, vy2);
+  const textWidth = Math.abs(vx2 - vx1);
+  const textHeight = Math.abs(vy2 - vy1);
 
   const textRight = textX + textWidth;
   const textBottom = textY + textHeight;
+  const textArea = textWidth * textHeight;
 
-  // Compare with user redaction boxes (in canvas coordinates)
   for (const box of pageBoxes) {
     const boxRight = box.x + box.width;
     const boxBottom = box.y + box.height;
 
-    const textInsideBox =
-      textX >= box.x &&
-      textY >= box.y &&
-      textRight <= boxRight &&
-      textBottom <= boxBottom;
+    // Calculate intersection area
+    const intersectLeft = Math.max(textX, box.x);
+    const intersectTop = Math.max(textY, box.y);
+    const intersectRight = Math.min(textRight, boxRight);
+    const intersectBottom = Math.min(textBottom, boxBottom);
 
-    if (textInsideBox) return true;
+    // Check if there's an intersection
+    if (intersectLeft < intersectRight && intersectTop < intersectBottom) {
+      const intersectWidth = intersectRight - intersectLeft;
+      const intersectHeight = intersectBottom - intersectTop;
+      const intersectArea = intersectWidth * intersectHeight;
+
+      // Redact if more than 50% of the text is covered
+      const coverageRatio = intersectArea / textArea;
+      if (coverageRatio > 0.5) {
+        return true;
+      }
+    }
   }
 
   return false;
 }
+
 
 /**
  * Extracts visible text (excluding redacted regions)
@@ -107,6 +119,40 @@ export async function extractTextFromPDF(
 export async function loadPDFDocument(file: File) {
   const arrayBuffer = await file.arrayBuffer();
   return await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+}
+
+/**
+ * Extracts ONLY the redacted text from the PDF
+ */
+export async function extractRedactedText(
+  file: File,
+  redactionBoxes: RedactionBox[] = []
+): Promise<string> {
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+  const redactedTexts: string[] = [];
+
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const scale = 1;
+    const viewport = page.getViewport({ scale });
+    const textContent = await page.getTextContent();
+
+    // Filter to get ONLY redacted text items
+    const redactedItems = textContent.items.filter((item: any) => {
+      return (
+        item.str?.trim() && isTextRedacted(item, redactionBoxes, i, viewport)
+      );
+    });
+
+    const redactedText = redactedItems.map((item: any) => item.str).join(" ");
+    if (redactedText.trim()) {
+      redactedTexts.push(redactedText);
+    }
+  }
+
+  return redactedTexts.join("\n");
 }
 
 export async function validateBankStatement(file: File): Promise<boolean> {
