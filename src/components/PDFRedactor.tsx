@@ -76,6 +76,7 @@ export default function PDFRedactor({
   onCancel,
 }: PDFRedactorProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fileRef = useRef<File | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [redactionBoxes, setRedactionBoxes] = useState<RedactionBox[]>([]);
@@ -85,7 +86,10 @@ export default function PDFRedactor({
   const [redactedText, setRedactedText] = useState<string>("");
 
   useEffect(() => {
-    loadPDF();
+    if (fileRef.current !== file) {
+      fileRef.current = file;
+      loadPDF();
+    }
   }, [file]);
 
   useEffect(() => {

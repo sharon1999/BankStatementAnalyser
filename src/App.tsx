@@ -2,6 +2,7 @@ import { useState } from "react";
 import Navbar from "./components/Navbar";
 import FileUploader from "./components/FileUploader";
 import PDFRedactor from "./components/PDFRedactor";
+import PreviewPage from "./components/PreviewPage";
 import LoadingScreen from "./components/LoadingScreen";
 import Dashboard from "./components/Dashboard";
 import {
@@ -17,13 +18,16 @@ import { parseTransactions } from "./utils/transactionParser";
 import { categorizeTransactions } from "./utils/categorizer";
 import { generateSummary } from "./utils/analytics";
 
-type AppState = "upload" | "redact" | "loading" | "dashboard";
+type AppState = "upload" | "redact" | "preview" | "loading" | "dashboard";
 
 function App() {
   const [state, setState] = useState<AppState>("upload");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [summary, setSummary] = useState<TransactionSummary | null>(null);
+  const [previewText, setPreviewText] = useState<string>("");
+  const [previewPageCount, setPreviewPageCount] = useState<number>(0);
+  const [redactionBoxes, setRedactionBoxes] = useState<RedactionBox[]>([]);
 
   const handleFileSelect = async (file: File) => {
     setState("loading");
@@ -46,16 +50,33 @@ function App() {
     }
   };
 
-  const handleRedactionComplete = async (redactionBoxes: RedactionBox[]) => {
+  const handleRedactionComplete = async (boxes: RedactionBox[]) => {
     setState("loading");
 
     try {
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      const pages = await extractTextFromPDF(selectedFile!, redactionBoxes);
+      const pages = await extractTextFromPDF(selectedFile!, boxes);
       const allText = pages.map((p) => p.text).join("\n");
 
-      const parsedTransactions = parseTransactions(allText);
+      setRedactionBoxes(boxes);
+      setPreviewText(allText);
+      setPreviewPageCount(pages.length);
+      setState("preview");
+    } catch (error) {
+      console.error("Error processing PDF:", error);
+      alert("Failed to process PDF. Please try again with a different file.");
+      setState("upload");
+    }
+  };
+
+  const handlePreviewConfirm = async () => {
+    setState("loading");
+
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      const parsedTransactions = parseTransactions(previewText);
       const categorizedTransactions =
         categorizeTransactions(parsedTransactions);
       const summaryData = generateSummary(categorizedTransactions);
@@ -64,16 +85,23 @@ function App() {
       setSummary(summaryData);
       setState("dashboard");
     } catch (error) {
-      console.error("Error processing PDF:", error);
-      alert("Failed to process PDF. Please try again with a different file.");
-      setState("upload");
+      console.error("Error analyzing transactions:", error);
+      alert("Failed to analyze transactions. Please try again.");
+      setState("preview");
     }
+  };
+
+  const handleBackToRedaction = () => {
+    setState("redact");
   };
 
   const handleReset = () => {
     setSelectedFile(null);
     setTransactions([]);
     setSummary(null);
+    setPreviewText("");
+    setPreviewPageCount(0);
+    setRedactionBoxes([]);
     setState("upload");
   };
 
@@ -91,9 +119,19 @@ function App() {
 
         {state === "redact" && selectedFile && (
           <PDFRedactor
+            key={selectedFile.name}
             file={selectedFile}
             onComplete={handleRedactionComplete}
             onCancel={handleCancelRedaction}
+          />
+        )}
+
+        {state === "preview" && (
+          <PreviewPage
+            text={previewText}
+            pageCount={previewPageCount}
+            onBack={handleBackToRedaction}
+            onConfirm={handlePreviewConfirm}
           />
         )}
 
