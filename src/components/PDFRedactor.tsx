@@ -135,11 +135,11 @@ export default function PDFRedactor({
         .map((item: any) => item.str)
         .join(" ");
       if (redactedPageText.trim()) {
-        redactedTexts.push(`Page ${i}: ${redactedPageText}`);
+        redactedTexts.push(`PAGE_${i}|||${redactedPageText}`);
       }
     }
 
-    setRedactedText(redactedTexts.join("\n\n"));
+    setRedactedText(redactedTexts.join("|||SEPARATOR|||"));
   };
 
   const renderPage = async (pageNum: number) => {
@@ -301,15 +301,37 @@ export default function PDFRedactor({
             <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
               Text covered by redaction boxes will appear here
             </p>
-            <div className="flex-1 bg-gray-50 dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700 p-3 overflow-y-auto">
+            <div className="flex-1 bg-gray-50 dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700 p-4 overflow-y-auto">
               {redactedText ? (
-                <pre className="text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap font-mono">
-                  {redactedText}
-                </pre>
+                <div className="space-y-4">
+                  {redactedText.split("|||SEPARATOR|||").map((section, idx) => {
+                    const [pageInfo, text] = section.split("|||");
+                    const pageNum = pageInfo.replace("PAGE_", "");
+                    return (
+                      <div key={idx} className="group">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300">
+                            Page {pageNum}
+                          </span>
+                          <div className="flex-1 h-px bg-gradient-to-r from-gray-300 to-transparent dark:from-gray-700"></div>
+                        </div>
+                        <p className="text-sm leading-relaxed text-gray-800 dark:text-gray-200 pl-2 border-l-2 border-orange-200 dark:border-orange-800/50">
+                          {text}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
               ) : (
-                <p className="text-xs text-gray-400 dark:text-gray-500 italic">
-                  No redactions yet. Draw boxes on the PDF to redact text.
-                </p>
+                <div className="flex flex-col items-center justify-center h-full text-center py-8">
+                  <Eraser className="text-gray-300 dark:text-gray-600 mb-3" size={32} />
+                  <p className="text-sm text-gray-400 dark:text-gray-500 font-medium">
+                    No redactions yet
+                  </p>
+                  <p className="text-xs text-gray-400 dark:text-gray-600 mt-1">
+                    Draw boxes on the PDF to redact text
+                  </p>
+                </div>
               )}
             </div>
           </div>

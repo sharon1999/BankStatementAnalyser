@@ -1,11 +1,40 @@
 import { motion } from 'framer-motion';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Sparkles } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 interface LoadingScreenProps {
   message?: string;
 }
 
-export default function LoadingScreen({ message = 'Analyzing your bank statement...' }: LoadingScreenProps) {
+const AI_MESSAGES = [
+  'Connecting to AI provider...',
+  'Analyzing transactions with AI...',
+  'Categorizing expenses intelligently...',
+  'Generating financial insights...',
+  'Processing your data...'
+];
+
+export default function LoadingScreen({ message }: LoadingScreenProps) {
+  const [messageIndex, setMessageIndex] = useState(0);
+  const [displayMessage, setDisplayMessage] = useState(
+    message || AI_MESSAGES[0]
+  );
+
+  useEffect(() => {
+    if (!message) {
+      const interval = setInterval(() => {
+        setMessageIndex((prev) => (prev + 1) % AI_MESSAGES.length);
+      }, 2000);
+      return () => clearInterval(interval);
+    }
+  }, [message]);
+
+  useEffect(() => {
+    if (!message) {
+      setDisplayMessage(AI_MESSAGES[messageIndex]);
+    }
+  }, [messageIndex, message]);
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -15,16 +44,29 @@ export default function LoadingScreen({ message = 'Analyzing your bank statement
       <motion.div
         animate={{ rotate: 360 }}
         transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+        className="relative"
       >
         <Loader2 size={64} className="text-blue-600 dark:text-blue-400" />
+        <motion.div
+          animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
+          transition={{ duration: 1.5, repeat: Infinity }}
+          className="absolute -top-2 -right-2"
+        >
+          <Sparkles size={24} className="text-cyan-500" />
+        </motion.div>
       </motion.div>
 
-      <div className="text-center">
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
-          {message}
-        </h2>
+      <div className="text-center max-w-md">
+        <motion.h2
+          key={displayMessage}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-2xl font-bold text-gray-800 dark:text-white mb-2"
+        >
+          {displayMessage}
+        </motion.h2>
         <p className="text-gray-600 dark:text-gray-400">
-          This may take a few moments
+          {message ? 'This may take a few moments' : 'Powered by AI'}
         </p>
       </div>
 

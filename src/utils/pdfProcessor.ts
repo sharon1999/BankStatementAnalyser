@@ -154,38 +154,3 @@ export async function extractRedactedText(
 
   return redactedTexts.join("\n");
 }
-
-export async function validateBankStatement(file: File): Promise<boolean> {
-  try {
-    const pages = await extractTextFromPDF(file);
-    const allText = pages.map((p) => p.text.toLowerCase()).join(" ");
-
-    const bankIndicators = [
-      "statement",
-      "account",
-      "balance",
-      "transaction",
-      "deposit",
-      "withdrawal",
-      "debit",
-      "credit",
-      "bank",
-      "beginning balance",
-      "ending balance",
-      "account number",
-      "statement period",
-      "opening balance",
-      "closing balance",
-    ];
-
-    const matchCount = bankIndicators.reduce(
-      (count, indicator) => count + (allText.includes(indicator) ? 1 : 0),
-      0
-    );
-
-    return matchCount >= 3;
-  } catch (error) {
-    console.error("Error validating PDF:", error);
-    return false;
-  }
-}
