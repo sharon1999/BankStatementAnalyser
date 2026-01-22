@@ -200,53 +200,6 @@ PDF Upload → Local Redaction → Text Extraction
 - **Native Fetch API** - No additional dependencies
 - **Multi-provider support** - OpenAI, Anthropic, Gemini, Groq
 
-### State Management
-- **React Hooks** - useState, useEffect
-- **localStorage** - Settings persistence
-
----
-
-## 📁 Project Structure
-
-```
-BankStatementAnalyser/
-├── src/
-│   ├── components/          # React components
-│   │   ├── Dashboard.tsx
-│   │   ├── FileUploader.tsx
-│   │   ├── LoadingScreen.tsx
-│   │   ├── Navbar.tsx
-│   │   ├── PDFRedactor.tsx
-│   │   ├── PreviewPage.tsx
-│   │   └── SettingsModal.tsx
-│   ├── services/            # Business logic
-│   │   └── llmService.ts    # AI provider integrations
-│   ├── types/               # TypeScript types
-│   │   ├── llm.ts
-│   │   └── transaction.ts
-│   ├── utils/               # Utility functions
-│   │   ├── pdfProcessor.ts
-│   │   └── settingsStorage.ts
-│   ├── App.tsx              # Main app component
-│   └── main.tsx             # Entry point
-├── public/                  # Static assets
-├── package.json
-└── README.md
-```
-
----
-
-## 🎨 Screenshots
-
-### Upload & Redact
-*Upload your PDF and redact sensitive information with an intuitive drawing interface*
-
-### AI Settings
-*Configure your preferred AI provider with cost estimates and connection testing*
-
-### Dashboard
-*View comprehensive analytics with beautiful charts and transaction lists*
-
 ---
 
 ## 🤝 Contributing
@@ -258,29 +211,6 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
-
----
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-## 🙏 Acknowledgments
-
-- **PDF.js** - Mozilla's PDF rendering library
-- **Lucide Icons** - Beautiful icon set
-- **Recharts** - Charting library
-- **Framer Motion** - Animation library
-
----
-
-## 📧 Contact
-
-**Sharon Antony** - [@sharon1999](https://github.com/sharon1999)
-
-Project Link: [https://github.com/sharon1999/BankStatementAnalyser](https://github.com/sharon1999/BankStatementAnalyser)
 
 ---
 
